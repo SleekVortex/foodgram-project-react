@@ -118,3 +118,87 @@ class Recipe(models.Model):
         ]
         unique_together = ['name', 'author']
 
+
+class Favorite(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorites'
+    )
+
+    def __str__(self):
+        return f'Пользователь: {self.user}. Рецепт: {self.recipe}.'
+
+    class Meta:
+        ordering = ['recipe', 'user']
+        verbose_name = 'Избранный рецепт'
+        verbose_name_plural = 'Избранные рецепты'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_user_favorite_recipe')
+        ]
+        unique_together = ['user', 'recipe']
+
+
+class ShoppingCart(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart'
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='shopping_cart'
+    )
+
+    def __str__(self):
+        return f'Пользователь: {self.user}. Рецепт: {self.recipe}.'
+
+    class Meta:
+        ordering = ['recipe', 'user']
+        verbose_name = 'Рецепт в корзине'
+        verbose_name_plural = 'Рецепты в корзине'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_user_recipe_in_cart')
+        ]
+        unique_together = ['user', 'recipe']
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество',
+        validators=[MinValueValidator(
+            1,
+            message='Количество не должно быть менее 1.',
+        )]
+    )
+
+    def __str__(self):
+        return f'Рецепт:{self.recipe}. Ингредиент:{self.ingredient}.'
+
+    class Meta:
+        ordering = ['recipe__name']
+        verbose_name = 'Ингредиент в рецепте'
+        verbose_name_plural = 'Ингредиенты в рецептах'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ingredient', 'recipe'],
+                name='unique_ingredient_recipe'
+            )
+        ]
+        unique_together = ['ingredient', 'recipe']
