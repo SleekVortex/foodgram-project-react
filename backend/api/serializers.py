@@ -9,7 +9,6 @@ from recipes.models import (Favorite, Ingredient,
                             ShoppingCart, Tag
                             )
 from rest_framework import serializers
-from users.models import Subscription
 
 User = get_user_model()
 
