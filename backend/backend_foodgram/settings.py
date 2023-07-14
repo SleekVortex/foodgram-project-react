@@ -1,12 +1,35 @@
+# flake8: noqa
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
+
+from .rest_djoser_settings import (
+    REST_FRAMEWORK_SETTINGS,
+    DJOSER_SETTINGS,
+)
+
+load_dotenv('.env')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-n9&jucyf380*52flyc42a0o%u)9&*il=l*op92#qak8!2jkyh$'
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    default='django-insecure-f0khymh@$)vk6vb17sdsaf2%%73677sdajjdfbj&'
+)
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    default='localhost'
+).split(', ')
+
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    default='http://127.0.0.1'
+).split(', ')
+
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -58,8 +81,12 @@ WSGI_APPLICATION = 'backend_foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': os.getenv('DB_NAME', default='postgres'),
+        'USER': os.getenv('POSTGRES_USER', default='postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
+        'HOST': os.getenv('DB_HOST', default=''),
+        'PORT': os.getenv('DB_PORT', default='5432')
     }
 }
 
@@ -78,9 +105,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-RU'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -88,6 +115,14 @@ USE_L10N = True
 
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = '/staticfiles/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+REST_FRAMEWORK = REST_FRAMEWORK_SETTINGS
+
+DJOSER = DJOSER_SETTINGS
