@@ -23,7 +23,10 @@ def modify_obj(
     try:
         if create:
             model.objects.create(recipe=recipe, user=request.user)
-            serializer = RecipeListSerializer(recipe, context={'request': request})
+            serializer = RecipeListSerializer(
+                recipe,
+                context={'request': request}
+            )
             return serializer.data, status.HTTP_201_CREATED
         else:
             model.objects.get(recipe=recipe, user=request.user).delete()
