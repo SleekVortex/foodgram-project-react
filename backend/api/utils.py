@@ -8,30 +8,6 @@ from recipes.models import Recipe
 from rest_framework import status
 
 
-def create_shopping_list(queryset):
-    """
-    Эта функция создает список покупок на основе переданного QuerySet.
-    QuerySet должен представлять собой список объектов
-     из модели RecipeIngredient.
-    Каждый элемент списка имеет следующий формат:
-    'Название ингредиента (единицы): количество'.
-    """
-    data = {}
-
-    for ingr in queryset:
-        key = f'{ingr.ingredient.name} ({ingr.ingredient.measurement_unit})'
-        data.setdefault(key, 0)
-        data[key] += ingr.amount
-
-    shopping_list = ['Список покупок:\n']
-
-    for key, value in data.items():
-        item = f'- {key}: {value} \n'
-        shopping_list.append(item)
-
-    return shopping_list
-
-
 def modify_obj(
         request: HttpRequest,
         pk: int,
@@ -42,15 +18,6 @@ def modify_obj(
     Функция для RecipeViewSet.
     Создает или удаляет связь между рецептом и пользователем через модель.
 
-    Параметры:
-    - request: запрос
-    - pk: id рецепта
-    - model: промежуточная модель для создания связи с рецептом
-    - create: флаг, указывающий на создание или удаление связи
-
-    Возвращает кортеж из двух элементов:
-    - подготовленные данные для ответа
-    - статус ответа
     """
     recipe = get_object_or_404(Recipe, pk=pk)
     try:
@@ -69,3 +36,25 @@ def modify_obj(
             {"errors": f"У вас нет рецепта с id {pk}."},
             status.HTTP_400_BAD_REQUEST,
         )
+
+
+def create_shopping_list(queryset):
+    """
+    Эта функция создает список покупок на основе переданного QuerySet.
+    Каждый элемент списка имеет следующий формат:
+    'Название ингредиента (единицы): количество'.
+    """
+    data = {}
+
+    for ingr in queryset:
+        key = f'{ingr.ingredient.name} ({ingr.ingredient.measurement_unit})'
+        data.setdefault(key, 0)
+        data[key] += ingr.amount
+
+    shopping_list = ['Список покупок:\n']
+
+    for key, value in data.items():
+        item = f'- {key}: {value} \n'
+        shopping_list.append(item)
+
+    return shopping_list

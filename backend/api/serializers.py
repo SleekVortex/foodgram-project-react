@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from djoser.serializers import UserSerializer as DjoserUserSerializer
 from recipes.models import (Favorite, Ingredient,
                             Recipe, RecipeIngredient,
-                            ShoppingCart, Tag
+                            ShoppingCart, Tag, Subscription
                             )
 from rest_framework import serializers
 
@@ -17,11 +17,13 @@ class UserSerializer(DjoserUserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, obj):
-        current_user = self.context.get('request').user
-        if current_user.is_anonymous:
-            return False
-        return Subscription.objects.filter(
-            author=obj, subscriber=current_user).exists()
+        current_user = None
+        if self.context.get('request'):
+            current_user = self.context['request'].user
+        if current_user and current_user.is_authenticated:
+            return Subscription.objects.filter(
+                author=obj, subscriber=current_user).exists()
+        return False
 
     class Meta:
         model = User

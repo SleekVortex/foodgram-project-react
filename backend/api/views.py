@@ -14,7 +14,7 @@ from recipes.models import (Favorite,
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from .filters import RecipeFilter
@@ -24,7 +24,7 @@ from .serializers import (IngredientSerializer,
                           SubscriptionSerializer,
                           TagSerializer,
                           )
-from .utils import create_shopping_list, modify_obj
+from .utils import create_shopping_list
 
 User = get_user_model()
 
@@ -53,52 +53,38 @@ class RecipeViewSet(viewsets.ModelViewSet):
         'ingredients'
     ).all()
     serializer_class = RecipeSerializer
-    permission_classes = (OwnerOrReadOnly,)
+    permission_classes = (IsAuthenticatedOrReadOnly,
+                          OwnerOrReadOnly)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageNumberPagination
 
-    @action(
-        methods=['post', 'delete'],
-        detail=True,
-    )
-    def favorite(self, request, pk):
-        created = request.method == 'POST'
-        if created:
-            obj, status_code = modify_obj(request, pk, Favorite, created)
-            return Response(obj, status=status_code)
-        obj, status_code = modify_obj(request, pk, Favorite, created)
-        return Response(obj, status=status_code)
+    @action(methods=['post', 'delete'], detail=True)
+    def favorite(self, request, pk=None):
+        recipe = self.get_object()
+        favorite, created = Favorite.objects.get_or_create(user=request.user, recipe=recipe)
+        if not created:
+            favorite.delete()
+        serializer = RecipeSerializer(recipe)
+        return Response(serializer.data)
 
-    @action(
-        methods=['post', 'delete'],
-        detail=True,
-    )
-    def shopping_cart(self, request, pk):
-        created = request.method == 'POST'
-        if created:
-            obj, status_code = modify_obj(request, pk, ShoppingCart, created)
-            return Response(obj, status=status_code)
-        obj, status_code = modify_obj(request, pk, ShoppingCart, created)
-        return Response(obj, status=status_code)
+    @action(methods=['post', 'delete'], detail=True)
+    def shopping_cart(self, request, pk=None):
+        recipe = self.get_object()
+        cart, created = ShoppingCart.objects.get_or_create(user=request.user, recipe=recipe)
+        if not created:
+            cart.delete()
+        serializer = RecipeSerializer(recipe)
+        return Response(serializer.data)
 
-    @action(
-        detail=False,
-        methods=['get'],
-        permission_classes=[IsAuthenticated],
-    )
+    @action(methods=['get'], detail=False)
     def download_shopping_cart(self, request):
-        recipe_ingredients = RecipeIngredient.objects.filter(
-            recipe__shopping_cart__user=request.user
-        ).select_related('ingredient').order_by('ingredient__name')
-        ingredients = [
-            ri
-            for ri in recipe_ingredients
-        ]
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__in=ShoppingCart.objects.filter(user=request.user).values_list('recipe')
+        )
         shopping_list = create_shopping_list(ingredients)
         response = HttpResponse(shopping_list, content_type='text/plain')
-        response['Content-Disposition'] = (
-            'attachment; filename={0}'.format('shopping_list.txt'))
+        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
 
     def perform_create(self, serializer):
@@ -108,6 +94,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class UserViewSet(UserViewSet):
     serializer_class = SubscriptionSerializer
     pagination_class = PageNumberPagination
+    permission_classes = (IsAuthenticated,)
     http_method_names = ['get', 'post']
 
     @action(methods=['get'], detail=False,
