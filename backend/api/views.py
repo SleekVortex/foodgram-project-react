@@ -34,7 +34,7 @@ User = get_user_model()
 class ReadOnlyViewSetBase(viewsets.ReadOnlyModelViewSet):
     permission_classes = (ReadOnly,)
     pagination_class = None
-    http_method_names = ['get', ]
+    http_method_names = ['get']
 
 
 class TagViewSet(ReadOnlyViewSetBase):
@@ -125,10 +125,6 @@ class UserViewSet(UserViewSet):
             permission_classes=[IsAuthenticated])
     def subscribe(self, request, id):
         author = get_object_or_404(User, pk=id)
-        if request.user == author:
-            return Response(
-                {"errors": "Нельзя подписаться на самого себя."},
-                status=status.HTTP_400_BAD_REQUEST)
         _, created = Subscription.objects.get_or_create(
             author=author, subscriber=request.user)
         if not created:
