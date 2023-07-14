@@ -6,7 +6,8 @@ from recipes.models import (Favorite,
                             Recipe,
                             RecipeIngredient,
                             ShoppingCart,
-                            Tag
+                            Tag,
+                            Subscription,
                             )
 from rest_framework import filters, viewsets
 from rest_framework.decorators import action
@@ -99,3 +100,55 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = (
             'attachment; filename={0}'.format('shopping_list.txt'))
         return response
+
+
+class UserViewSet(UserViewSet):
+    serializer_class = SubscriptionSerializer
+    pagination_class = PageNumberPagination
+    http_method_names = ['get', 'post']
+
+    @action(methods=['get'], detail=False,
+            permission_classes=[IsAuthenticated])
+    def subscriptions(self, request):
+        authors = User.objects.filter(subscription__subscriber=request.user)
+        page = self.paginate_queryset(authors)
+        if page is not None:
+            serializer = self.get_serializer(
+                page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(
+            authors, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(methods=['post'], detail=True,
+            permission_classes=[IsAuthenticated])
+    def subscribe(self, request, id):
+        author = get_object_or_404(User, pk=id)
+        if request.user == author:
+            return Response(
+                {"errors": "Нельзя подписаться на самого себя."},
+                status=status.HTTP_400_BAD_REQUEST)
+        _, created = Subscription.objects.get_or_create(
+            author=author, subscriber=request.user)
+        if not created:
+            return Response(
+                {"errors": "Вы уже подписаны на этого автора."},
+                status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_serializer(
+            author, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @subscribe.mapping.delete
+    def delete_subscribe(self, request, id):
+        author = get_object_or_404(
+            User,
+            pk=id,
+        )
+        subscription = get_object_or_404(
+            Subscription,
+            author=author,
+            subscriber=request.user,
+        )
+        subscription.delete()
+        return Response({"success": "Вы успешно отписаны."},
+                        status=status.HTTP_204_NO_CONTENT)
