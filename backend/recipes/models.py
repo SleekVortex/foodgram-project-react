@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
 
-from api.validators import validate_image
+from api.validators import validate_color
 
 User = get_user_model()
 
@@ -24,7 +24,8 @@ class Tag(models.Model):
         'Цвет',
         max_length=7,
         null=True,
-        unique=False
+        unique=False,
+        validators=[validate_color],
     )
 
     def get_absolute_url(self):
@@ -82,7 +83,6 @@ class Recipe(models.Model):
     image = models.ImageField(
         'Изображение',
         upload_to='images/',
-        validators=[validate_image],
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
