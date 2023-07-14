@@ -1,15 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet
 from recipes.models import (Favorite,
                             Ingredient,
                             Recipe,
                             RecipeIngredient,
                             ShoppingCart,
                             Tag,
-                            Subscription,
+                            Subscription
                             )
-from rest_framework import filters, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
@@ -19,7 +21,8 @@ from .filters import RecipeFilter
 from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (IngredientSerializer,
                           RecipeSerializer,
-                          TagSerializer
+                          SubscriptionSerializer,
+                          TagSerializer,
                           )
 from .utils import create_shopping_list, modify_obj
 
@@ -54,9 +57,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageNumberPagination
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
     @action(
         methods=['post', 'delete'],
@@ -100,6 +100,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = (
             'attachment; filename={0}'.format('shopping_list.txt'))
         return response
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 class UserViewSet(UserViewSet):
