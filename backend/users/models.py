@@ -29,3 +29,34 @@ class User(AbstractUser):
             f'Пользователь {self.first_name} {self.last_name} '
             f'({self.username})'
         )
+
+
+class Subscription(models.Model):
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор',
+        related_name='subscription',
+    )
+    subscriber = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Подписчик',
+        related_name='subscriber',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'subscriber'], name='unique_subscriptions'
+            )
+        ]
+        unique_together = ['author', 'subscriber']
+
+    def __str__(self):
+        return (
+            f'Пользователь {self.subscriber.username} - '
+            f'подписчик автора: {self.author.username}'
+        )
