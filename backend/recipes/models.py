@@ -3,6 +3,8 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.urls import reverse
 
+from api.validators import validate_image
+
 User = get_user_model()
 
 
@@ -80,6 +82,7 @@ class Recipe(models.Model):
     image = models.ImageField(
         'Изображение',
         upload_to='images/',
+        validators=[validate_image],
     )
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
