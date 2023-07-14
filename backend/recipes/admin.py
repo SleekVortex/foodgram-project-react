@@ -45,11 +45,11 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
     list_editable = ('amount',)
 
 
-class FavoriteAdmin(admin.ModelAdmin):
+class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'user')
 
 
-class ShoppingCartAdmin(admin.ModelAdmin):
+class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('id', 'recipe', 'user')
 
 
