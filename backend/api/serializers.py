@@ -50,7 +50,9 @@ class SubscriptionSerializer(UserSerializer):
 
     def validate(self, data):
         if self.context['request'].user == data.get('author'):
-            raise serializers.ValidationError("Нельзя подписаться на самого себя.")
+            raise serializers.ValidationError(
+                "Нельзя подписаться на самого себя."
+            )
         return data
 
     class Meta(UserSerializer.Meta):
@@ -158,9 +160,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
         instance.save()
         return instance
-      
+
     def validate_ingredients(self, value):
         ingredients = value
+        ingredients_ids = set()
         for ingredient in ingredients:
             if not ingredient.get('amount') or not ingredient.get('id'):
                 raise serializers.ValidationError(
