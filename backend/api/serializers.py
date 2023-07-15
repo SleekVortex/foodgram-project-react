@@ -144,10 +144,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             recipe=obj, user=current_user).exists()
 
     def update(self, instance, validated_data):
-        ingredients = self.initial_data.pop('ingredients')
+        ingredients = self.data.pop('ingredients')
         RecipeIngredient.objects.filter(recipe=instance).all().delete()
         self.__create_recipe_ingredient_objects(instance, ingredients)
-        tags = self.initial_data.get('tags')
+        tags = self.data.get('tags')
         instance.tags.set(tags)
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
@@ -158,10 +158,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
         instance.save()
         return instance
-
+      
     def validate_ingredients(self, value):
         ingredients = value
-        ingredients_ids = set()
         for ingredient in ingredients:
             if not ingredient.get('amount') or not ingredient.get('id'):
                 raise serializers.ValidationError(
@@ -183,8 +182,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        tags = self.initial_data.get('tags')
-        ingredients = self.initial_data.pop('ingredients')
+        tags = self.data.get('tags')
+        ingredients = self.data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         self.__create_recipe_ingredient_objects(recipe, ingredients)
