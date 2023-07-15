@@ -48,6 +48,11 @@ class SubscriptionSerializer(UserSerializer):
     def get_recipes_count(self, obj):
         return obj.recipes.count()
 
+    def validate(self, data):
+        if self.context['request'].user == data.get('author'):
+            raise serializers.ValidationError("Нельзя подписаться на самого себя.")
+        return data
+
     class Meta(UserSerializer.Meta):
         fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count',)
 
@@ -55,9 +60,7 @@ class SubscriptionSerializer(UserSerializer):
 class RecipeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ('id', 'name',
-                  'image', 'cooking_time',
-                  )
+        fields = ('id', 'name', 'image', 'cooking_time',)
         read_only_fields = ('name', 'text',
                             'author', 'image',
                             'cooking_time', 'tags',
@@ -68,9 +71,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('id', 'name',
-                  'measurement_unit',
-                  )
+        fields = ('id', 'name', 'measurement_unit',)
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -82,9 +83,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'name',
-                  'measurement_unit', 'amount',
-                  )
+        fields = ('id', 'name', 'measurement_unit', 'amount',)
 
 
 class ImageSerializer(serializers.ImageField):
@@ -159,16 +158,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
         instance.save()
         return instance
-
-    def validate(self, data):
-        ingredients = self.data['ingredients']
-        ingredients_ids = set()
-        tags = self.data['tags']
-
-        tags_names = [tag['name'] for tag in tags]
-        if len(set(tags_names)) != len(tags):
-            raise serializers.ValidationError('Теги не должны повторяться.')
-
+      
+    def validate_ingredients(self, value):
+        ingredients = value
         for ingredient in ingredients:
             if not ingredient.get('amount') or not ingredient.get('id'):
                 raise serializers.ValidationError(
@@ -180,7 +172,14 @@ class RecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Ингредиенты не должны повторяться.')
             ingredients_ids.add(ingredient['id'])
-        return data
+        return value
+
+    def validate_tags(self, value):
+        tags = value
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                'Теги не должны повторяться.')
+        return value
 
     def create(self, validated_data):
         tags = self.data.get('tags')

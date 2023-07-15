@@ -6,7 +6,6 @@ from djoser.views import UserViewSet
 from recipes.models import (Favorite,
                             Ingredient,
                             Recipe,
-                            RecipeIngredient,
                             ShoppingCart,
                             Tag,
                             Subscription
@@ -26,7 +25,7 @@ from .serializers import (IngredientSerializer,
                           SubscriptionSerializer,
                           TagSerializer,
                           )
-from .utils import create_shopping_list
+from .utils import modify_obj
 
 User = get_user_model()
 
@@ -34,7 +33,7 @@ User = get_user_model()
 class ReadOnlyViewSetBase(viewsets.ReadOnlyModelViewSet):
     permission_classes = (ReadOnly,)
     pagination_class = None
-    http_method_names = ['get', ]
+    http_method_names = ['get']
 
 
 class TagViewSet(ReadOnlyViewSetBase):
@@ -62,40 +61,34 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
 
     @action(methods=['post', 'delete'], detail=True)
-    def favorite(self, request, pk=None):
-        recipe = self.get_object()
-        favorite, created = Favorite.objects.get_or_create(
-            user=request.user,
-            recipe=recipe
-        )
-        if not created:
-            favorite.delete()
-        serializer = RecipeSerializer(recipe)
-        return Response(serializer.data)
+    def favorite(self, request, pk):
+        if request.method == "POST":
+            data, status = modify_obj(request, pk, Favorite, create=True)
+            return Response(data, status=status)
+        data, status = modify_obj(request, pk, Favorite, create=False)
+        return Response(data, status=status)
 
     @action(methods=['post', 'delete'], detail=True)
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         cart, created = ShoppingCart.objects.get_or_create(
             user=request.user,
-            recipe=recipe
         )
-        if not created:
-            cart.delete()
+        if request.method == 'POST':
+            cart.recipe.add(recipe)
+        else:
+            cart = get_object_or_404(ShoppingCart, recipe=recipe)
+            cart.recipe.remove(recipe)
         serializer = RecipeSerializer(recipe)
         return Response(serializer.data)
 
     @action(methods=['get'], detail=False)
     def download_shopping_cart(self, request):
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__in=ShoppingCart.objects.filter(
-                user=request.user).values_list('recipe')
-        )
-        shopping_list = create_shopping_list(ingredients)
-        response = HttpResponse(shopping_list, content_type='text/plain')
-        response['Content-Disposition'] = (
-            'attachment; filename="shopping_list.txt"'
-        )
+        cart = get_object_or_404(ShoppingCart, user=request.user)
+        shopping_list = cart.create_shopping_list()
+        shopping_list_text = '\n'.join(shopping_list)
+        response = HttpResponse(shopping_list_text, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
         return response
 
     def perform_create(self, serializer):
@@ -125,10 +118,6 @@ class UserViewSet(UserViewSet):
             permission_classes=[IsAuthenticated])
     def subscribe(self, request, id):
         author = get_object_or_404(User, pk=id)
-        if request.user == author:
-            return Response(
-                {"errors": "Нельзя подписаться на самого себя."},
-                status=status.HTTP_400_BAD_REQUEST)
         _, created = Subscription.objects.get_or_create(
             author=author, subscriber=request.user)
         if not created:
