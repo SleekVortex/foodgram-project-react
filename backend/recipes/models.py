@@ -149,29 +149,47 @@ class Favorite(models.Model):
 
 
 class ShoppingCart(models.Model):
-    recipe = models.ForeignKey(
+    recipe = models.ManyToManyField(
         Recipe,
-        on_delete=models.CASCADE,
         related_name='shopping_cart'
     )
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='shopping_cart'
+        related_name='shopping_cart',
+        null=True,
     )
+
+    def create_shopping_list(self):
+        """
+        Этот метод создает список покупок на основе связанных объектов Recipe.
+        Каждый элемент списка имеет следующий формат:
+        'Название ингредиента (единицы): количество'.
+        """
+        data = {}
+
+        for recipe in self.recipe.all():
+            for recipeingredient in recipe.recipeingredient_set.all():
+                ingredient = recipeingredient.ingredient
+                key = f'{ingredient.name} ({ingredient.measurement_unit})'
+                data.setdefault(key, 0)
+                data[key] += recipeingredient.amount
+
+        shopping_list = ['Список покупок:\n']
+
+        for key, value in data.items():
+            item = f'- {key}: {value} \n'
+            shopping_list.append(item)
+
+        return shopping_list
 
     def __str__(self):
         return f'Пользователь: {self.user}. Рецепт: {self.recipe}.'
 
     class Meta:
-        ordering = ['recipe', 'user']
+        ordering = ['-id']
         verbose_name = 'Рецепт в корзине'
         verbose_name_plural = 'Рецепты в корзине'
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='unique_user_recipe_in_cart')
-        ]
-        unique_together = ['user', 'recipe']
 
 
 class RecipeIngredient(models.Model):

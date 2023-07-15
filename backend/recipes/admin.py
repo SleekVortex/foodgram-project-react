@@ -46,7 +46,12 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 
 
 class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ('id', 'recipe', 'user')
+    list_display = ('id', 'user', 'recipe_list_display')
+
+    def recipe_list_display(self, obj):
+        return ', '.join([recipe.name for recipe in obj.recipe.all()])
+
+    recipe_list_display.short_description = 'Recipes'
 
 
 class FavoriteAdmin(admin.ModelAdmin):
