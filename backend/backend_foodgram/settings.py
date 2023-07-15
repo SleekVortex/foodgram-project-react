@@ -4,10 +4,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .rest_djoser_settings import (
-    REST_FRAMEWORK_SETTINGS,
-    DJOSER_SETTINGS,
-)
+from .rest_djoser_settings import DJOSER_SETTINGS, REST_FRAMEWORK_SETTINGS
 
 load_dotenv('.env')
 
