@@ -88,7 +88,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         shopping_list = cart.create_shopping_list()
         shopping_list_text = '\n'.join(shopping_list)
         response = HttpResponse(shopping_list_text, content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"')
         return response
 
     def perform_create(self, serializer):

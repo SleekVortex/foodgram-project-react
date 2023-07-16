@@ -50,7 +50,8 @@ class SubscriptionSerializer(UserSerializer):
 
     def validate(self, data):
         if self.context['request'].user == data.get('author'):
-            raise serializers.ValidationError("Нельзя подписаться на самого себя.")
+            raise serializers.ValidationError(
+                "Нельзя подписаться на самого себя.")
         return data
 
     class Meta(UserSerializer.Meta):
