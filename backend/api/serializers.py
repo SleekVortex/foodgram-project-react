@@ -4,10 +4,8 @@ from io import BytesIO
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from djoser.serializers import UserSerializer as DjoserUserSerializer
-from recipes.models import (Favorite, Ingredient,
-                            Recipe, RecipeIngredient,
-                            ShoppingCart, Tag, Subscription
-                            )
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Subscription, Tag)
 from rest_framework import serializers
 
 User = get_user_model()
@@ -50,7 +48,9 @@ class SubscriptionSerializer(UserSerializer):
 
     def validate(self, data):
         if self.context['request'].user == data.get('author'):
-            raise serializers.ValidationError("Нельзя подписаться на самого себя.")
+            raise serializers.ValidationError(
+                "Нельзя подписаться на самого себя."
+            )
         return data
 
     class Meta(UserSerializer.Meta):
@@ -144,10 +144,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             recipe=obj, user=current_user).exists()
 
     def update(self, instance, validated_data):
-        ingredients = self.initial_data.pop('ingredients')
+        ingredients = self.data.pop('ingredients')
         RecipeIngredient.objects.filter(recipe=instance).all().delete()
         self.__create_recipe_ingredient_objects(instance, ingredients)
-        tags = self.initial_data.get('tags')
+        tags = self.data.get('tags')
         instance.tags.set(tags)
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
@@ -183,8 +183,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        tags = self.initial_data.get('tags')
-        ingredients = self.initial_data.pop('ingredients')
+        tags = self.data.get('tags')
+        ingredients = self.data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         self.__create_recipe_ingredient_objects(recipe, ingredients)

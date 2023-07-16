@@ -1,4 +1,4 @@
-from typing import Type, Tuple, Any, Dict
+from typing import Any, Dict, Tuple, Type
 
 from api.serializers import RecipeListSerializer
 from django.db import models
@@ -39,25 +39,3 @@ def modify_obj(
             {"errors": f"У вас нет рецепта с id {pk}."},
             status.HTTP_400_BAD_REQUEST,
         )
-
-
-def create_shopping_list(queryset):
-    """
-    Эта функция создает список покупок на основе переданного QuerySet.
-    Каждый элемент списка имеет следующий формат:
-    'Название ингредиента (единицы): количество'.
-    """
-    data = {}
-
-    for ingr in queryset:
-        key = f'{ingr.ingredient.name} ({ingr.ingredient.measurement_unit})'
-        data.setdefault(key, 0)
-        data[key] += ingr.amount
-
-    shopping_list = ['Список покупок:\n']
-
-    for key, value in data.items():
-        item = f'- {key}: {value} \n'
-        shopping_list.append(item)
-
-    return shopping_list
