@@ -3,28 +3,19 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Favorite,
-                            Ingredient,
-                            Recipe,
-                            ShoppingCart,
-                            Tag,
-                            Subscription
-                            )
+from recipes.models import (Favorite, Ingredient, Recipe, ShoppingCart,
+                            Subscription, Tag)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly
-                                        )
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
 from .filters import RecipeFilter
 from .permissions import OwnerOrReadOnly, ReadOnly
-from .serializers import (IngredientSerializer,
-                          RecipeSerializer,
-                          SubscriptionSerializer,
-                          TagSerializer,
-                          )
+from .serializers import (IngredientSerializer, RecipeSerializer,
+                          SubscriptionSerializer, TagSerializer)
 from .utils import modify_obj
 
 User = get_user_model()

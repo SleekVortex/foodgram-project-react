@@ -1,4 +1,4 @@
-from typing import Type, Tuple, Any, Dict
+from typing import Any, Dict, Tuple, Type
 
 from api.serializers import RecipeListSerializer
 from django.db import models
