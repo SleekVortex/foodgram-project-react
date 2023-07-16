@@ -4,8 +4,6 @@ volumes:
   static_value:
   media_value:
   foodgram_db_value:
-  data_value:
-
 
 services:
   foodgram_db:
@@ -24,8 +22,7 @@ services:
     volumes:
       - static_value:/app/staticfiles/
       - media_value:/app/media/
-      - data_value:/app/data/
-      - ../data/ingredients.csv:/app/data/ingredients.csv
+      - ../data/:/app/data/
     depends_on:
       - foodgram_db
     container_name: foodgram_backend
