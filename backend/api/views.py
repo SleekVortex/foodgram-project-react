@@ -51,7 +51,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     pagination_class = PageNumberPagination
 
-    @action(methods=['post', 'delete'], detail=True)
+    @action(methods=['post', 'delete'], detail=True,
+            permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
         if request.method == "POST":
             data, status = modify_obj(request, pk, Favorite, create=True)
@@ -59,7 +60,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         data, status = modify_obj(request, pk, Favorite, create=False)
         return Response(data, status=status)
 
-    @action(methods=['post', 'delete'], detail=True)
+    @action(methods=['post', 'delete'], detail=True,
+            permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
         cart, created = ShoppingCart.objects.get_or_create(
@@ -73,7 +75,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer = RecipeSerializer(recipe)
         return Response(serializer.data)
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False,
+            permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         cart = get_object_or_404(ShoppingCart, user=request.user)
         shopping_list = cart.create_shopping_list()
