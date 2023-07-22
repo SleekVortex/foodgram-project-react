@@ -143,20 +143,16 @@ class RecipeSerializer(serializers.ModelSerializer):
             recipe=obj, user=current_user).exists()
 
     def update(self, instance, validated_data):
-        ingredients = self.initial_data.pop('ingredients')
-        RecipeIngredient.objects.filter(recipe=instance).all().delete()
-        self.__create_recipe_ingredient_objects(instance, ingredients)
-        tags = self.initial_data.get('tags')
-        instance.tags.set(tags)
-        instance.image = validated_data.get('image', instance.image)
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time',
-            instance.cooking_time
-        )
-        instance.save()
-        return instance
+        ingredients = validated_data.pop('ingredients')
+        if ingredients:
+            RecipeIngredient.objects.filter(recipe=instance).all().delete()
+            self.__create_recipe_ingredient_objects(instance, ingredients)
+        tags = validated_data.pop('tags', None)
+        if tags:
+            instance.tags.set(tags)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        return super().update(instance, validated_data)
 
     def validate_ingredients(self, value):
         ingredients = value
