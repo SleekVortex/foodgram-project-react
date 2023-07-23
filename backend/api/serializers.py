@@ -176,6 +176,12 @@ class RecipeSerializer(serializers.ModelSerializer):
                 'Теги не должны повторяться.')
         return value
 
+    def validate_name(self, name):
+        if not any(c.isalpha() for c in name):
+            raise serializers.ValidationError(
+                'В названии рецепта должна быть хотя бы одна буква.')
+        return name
+
     def create(self, validated_data):
         tags = self.initial_data.get('tags')
         ingredients = self.initial_data.pop('ingredients')
